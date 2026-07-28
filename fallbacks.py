@@ -2,13 +2,12 @@ import os
 import requests
 from dotenv import load_dotenv
 
-# Load variables from .env file
 load_dotenv()
 
 class GeminiFallbackHandler:
     def __init__(self, api_key: str = None):
-        # Automatically reads GEMINI_API_KEY from environment/.env
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+        # Standard REST endpoint for Gemini 1.5 Flash
         self.endpoint_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.api_key}"
         self.system_context = (
             "You are an AI Academic Support Assistant for Zetech University. "
@@ -17,6 +16,7 @@ class GeminiFallbackHandler:
 
     def get_fallback_response(self, prompt: str) -> str:
         if not self.api_key:
+            print("[Gemini Error]: GEMINI_API_KEY environment variable is missing.")
             return "System Notice: Gemini API Key is missing."
 
         payload = {
@@ -36,6 +36,8 @@ class GeminiFallbackHandler:
             if res.status_code == 200:
                 data = res.json()
                 return data['candidates'][0]['content']['parts'][0]['text'].strip()
+            
+            print(f"[Gemini API Error] Status: {res.status_code}, Response: {res.text}")
             return "I am unable to resolve that specific query at the moment."
         except Exception as e:
             print(f"[Gemini Exception]: {e}")
