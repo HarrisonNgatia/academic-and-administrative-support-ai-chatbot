@@ -1,44 +1,32 @@
 import os
-import requests
 from dotenv import load_dotenv
+from google import genai
 
 load_dotenv()
 
 class GeminiFallbackHandler:
     def __init__(self, api_key: str = None):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
-        # Standard REST endpoint for Gemini 1.5 Flash
-        self.endpoint_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.api_key}"
+        self.client = genai.Client(api_key=self.api_key) if self.api_key else None
         self.system_context = (
             "You are an AI Academic Support Assistant for Zetech University. "
             "Provide concise, polite, and actionable answers to student queries."
         )
 
     def get_fallback_response(self, prompt: str) -> str:
-        if not self.api_key:
+        if not self.client:
             print("[Gemini Error]: GEMINI_API_KEY environment variable is missing.")
             return "System Notice: Gemini API Key is missing."
 
-        payload = {
-            "contents": [
-                {
-                    "parts": [
-                        {"text": f"System Context: {self.system_context}\nStudent Query: {prompt}"}
-                    ]
-                }
-            ],
-            "generationConfig": {"temperature": 0.3, "maxOutputTokens": 200}
-        }
-        headers = {"Content-Type": "application/json"}
+        full_prompt = f"System Context: {self.system_context}\nStudent Query: {prompt}"
 
         try:
-            res = requests.post(self.endpoint_url, json=payload, headers=headers, timeout=10)
-            if res.status_code == 200:
-                data = res.json()
-                return data['candidates'][0]['content']['parts'][0]['text'].strip()
-            
-            print(f"[Gemini API Error] Status: {res.status_code}, Response: {res.text}")
-            return "I am unable to resolve that specific query at the moment."
+            # Using the confirmed active model name for your key
+            response = self.client.models.generate_content(
+                model="gemini-flash-latest",
+                contents=full_prompt,
+            )
+            return response.text.strip()
         except Exception as e:
             print(f"[Gemini Exception]: {e}")
-            return "Connection error with generative support module."
+            return "I am unable to resolve that specific query at the moment."
