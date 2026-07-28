@@ -1,0 +1,9 @@
+# Secret keys & environment files
+.env
+
+# Database file (prevents pushing local test data)
+database.db
+
+# Python cache files
+__pycache__/
+*.pyc
