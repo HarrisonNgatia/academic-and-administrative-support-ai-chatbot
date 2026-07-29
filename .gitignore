@@ -3,6 +3,7 @@
 
 # Database file (prevents pushing local test data)
 database.db
+.db
 
 # Python cache files
 __pycache__/
